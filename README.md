@@ -1,4 +1,4 @@
-Image to PDF Generator
+Ming Toolkit
 =============
 
 ### Usage
