@@ -23,6 +23,11 @@ func Create() cli.Command {
 		Name: "create",
 		Flags: []cli.Flag{
 			cli.StringFlag{
+				Name:  "pageSize, s",
+				Value: "A4",
+				Usage: "Acceptable values are A3, A4, A5, Letter, or Legal.",
+			},
+			cli.StringFlag{
 				Name:  "imgPath, p",
 				Value: "./img",
 			},
@@ -31,16 +36,20 @@ func Create() cli.Command {
 				Value: 2,
 			},
 			cli.Float64Flag{
-				Name:  "margin, o",
+				Name:  "margin, m",
 				Value: 0,
 			},
 			cli.Float64Flag{
+				Name:  "marginTop, t",
+				Value: 1.1,
+			},
+			cli.Float64Flag{
 				Name:  "xInitPosition, x",
-				Value: 10,
+				Value: 5,
 			},
 			cli.Float64Flag{
 				Name:  "yInitPosition, y",
-				Value: 10,
+				Value: 5,
 			},
 			cli.BoolFlag{
 				Name:   "debug, d",
@@ -80,7 +89,7 @@ func Create() cli.Command {
 					sugar.Info(imageMapPath)
 				}
 
-				pdf := gofpdf.New("P", "mm", "A4", "")
+				pdf := gofpdf.New("P", "mm", c.String("pageSize"), "")
 				pdf.AddPage()
 
 				w, h := pdf.GetPageSize()
@@ -104,6 +113,7 @@ func Create() cli.Command {
 				}
 
 				fmt.Printf("Create %s.pdf\n", filepath.Base(f.Name()))
+				y := float64(0)
 
 				for _, v := range imageMapPath {
 					imageHeight = h / float64(len(v))
@@ -113,8 +123,13 @@ func Create() cli.Command {
 							columnCount++
 						}
 
-						x := xInitPosition + math.Mod(float64(i), columnNum)*(imageWidth+offset)
-						y := yInitPosition + imageHeight*columnCount
+						x := xInitPosition + math.Mod(float64(i), columnNum)*(imageWidth+offset) + math.Mod(float64(i), columnNum)*5
+
+						if i > int(columnNum-1) {
+							y = yInitPosition + imageHeight*columnCount*c.Float64("marginTop")
+						} else {
+							y = yInitPosition + imageHeight*columnCount
+						}
 
 						pdf.Image(v1, x, y, imageWidth, imageHeight, false, "", 0, "")
 						fmt.Println(v1)
@@ -123,6 +138,7 @@ func Create() cli.Command {
 							sugar.Infof("x %s\n", x)
 							sugar.Infof("y %s\n", y)
 							sugar.Infof("width %s\n", imageWidth)
+							sugar.Infof("width %s\n", imageHeight)
 							sugar.Infof("mod %s\n", math.Mod(float64(i), columnNum))
 							sugar.Infof("count %s\n", columnCount)
 							sugar.Info(y)
