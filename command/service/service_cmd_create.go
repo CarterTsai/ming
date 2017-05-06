@@ -130,6 +130,7 @@ func Create() cli.Command {
 					}
 				}
 
+				imageMapPath = make(map[string][]string)
 				local := filepath.Join(root, f.Name()+".pdf")
 
 				fmt.Println(local)
