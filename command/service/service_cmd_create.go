@@ -23,6 +23,11 @@ func Create() cli.Command {
 		Name: "create",
 		Flags: []cli.Flag{
 			cli.StringFlag{
+				Name:  "orientation, r",
+				Value: "P",
+				Usage: "P or Portrait. For landscape mode, specify L or Landscape.",
+			},
+			cli.StringFlag{
 				Name:  "pageSize, s",
 				Value: "A4",
 				Usage: "Acceptable values are A3, A4, A5, Letter, or Legal.",
@@ -42,6 +47,10 @@ func Create() cli.Command {
 			cli.Float64Flag{
 				Name:  "marginTop, t",
 				Value: 1.1,
+			},
+			cli.Float64Flag{
+				Name:  "marginLeft, l",
+				Value: 5,
 			},
 			cli.Float64Flag{
 				Name:  "xInitPosition, x",
@@ -89,7 +98,7 @@ func Create() cli.Command {
 					sugar.Info(imageMapPath)
 				}
 
-				pdf := gofpdf.New("P", "mm", c.String("pageSize"), "")
+				pdf := gofpdf.New(c.String("orientation"), "mm", c.String("pageSize"), "")
 				pdf.AddPage()
 
 				w, h := pdf.GetPageSize()
@@ -102,8 +111,6 @@ func Create() cli.Command {
 				// parameter
 				columnNum := c.Float64("columnNum")
 				offset := c.Float64("margin")
-				imageWidth := float64((w - (offset * 2) - 20) / columnNum)
-				imageHeight := float64(0)
 				xInitPosition := c.Float64("xInitPosition")
 				yInitPosition := c.Float64("yInitPosition")
 				columnCount := float64(0)
@@ -116,14 +123,24 @@ func Create() cli.Command {
 				y := float64(0)
 
 				for _, v := range imageMapPath {
-					imageHeight = h / float64(len(v))
+					imgTotal := float64(len(v))
+					imageHeight := h / imgTotal
+
+					if imgTotal < columnNum {
+						columnNum = imgTotal
+					}
+
+					imageWidth := float64((w - (offset * 2) - 20) / columnNum)
+
+					columnCount = float64(0)
+
 					for i, v1 := range v {
 
 						if i > 0 && math.Mod(float64(i), columnNum) == 0 {
 							columnCount++
 						}
 
-						x := xInitPosition + math.Mod(float64(i), columnNum)*(imageWidth+offset) + math.Mod(float64(i), columnNum)*5
+						x := xInitPosition + math.Mod(float64(i), columnNum)*(imageWidth+offset) + math.Mod(float64(i), columnNum)*c.Float64("marginLeft")
 
 						if i > int(columnNum-1) {
 							y = yInitPosition + imageHeight*columnCount*c.Float64("marginTop")
